@@ -210,7 +210,7 @@ class TracerPowerSpectrumMultipolesObservable(BaseCalculator):
         return flatdata, list_y
 
     @plotting.plotter(interactive={'kw_theory': {'color': 'black', 'label': 'reference'}})
-    def plot(self, scaling='kpk', kw_theory=None, fig=None):
+    def plot(self, scaling='kpk', kw_theory=None, fig=None, colors=None):
         """
         Plot data and theory power spectrum multipoles.
 
@@ -250,7 +250,9 @@ class TracerPowerSpectrumMultipolesObservable(BaseCalculator):
             kw_theory = [kw_theory]
         if len(kw_theory) != len(self.ells):
             kw_theory = [{key: value for key, value in kw_theory[0].items() if (key != 'label') or (ill == 0)} for ill in range(len(self.ells))]
-        kw_theory = [{'color': 'C{:d}'.format(ill), **kw} for ill, kw in enumerate(kw_theory)]
+        if colors is None:
+            colors = ['C%d'%i for i in range(len(self.ells))]
+        kw_theory = [{'color': colors[ill], **kw} for ill, kw in enumerate(kw_theory)]
 
         if fig is None:
             height_ratios = [max(len(self.ells), 3)] + [1] * len(self.ells)
@@ -266,7 +268,7 @@ class TracerPowerSpectrumMultipolesObservable(BaseCalculator):
         k_exp = 1 if scaling == 'kpk' else 0
 
         for ill, ell in enumerate(self.ells):
-            lax[0].errorbar(self.k[ill], self.k[ill]**k_exp * data[ill], yerr=self.k[ill]**k_exp * std[ill], color='C{:d}'.format(ill), linestyle='none', marker='o', label=r'$\ell = {:d}$'.format(ell))
+            lax[0].errorbar(self.k[ill], self.k[ill]**k_exp * data[ill], yerr=self.k[ill]**k_exp * std[ill], color=colors[ill], linestyle='none', marker='o', label=r'$\ell = {:d}$'.format(ell))
             lax[0].plot(self.k[ill], self.k[ill]**k_exp * theory[ill], **kw_theory[ill])
         for ill, ell in enumerate(self.ells):
             lax[ill + 1].plot(self.k[ill], (data[ill] - theory[ill]) / std[ill], **kw_theory[ill])
@@ -285,7 +287,7 @@ class TracerPowerSpectrumMultipolesObservable(BaseCalculator):
         return fig
 
     @plotting.plotter
-    def plot_bao(self, fig=None):
+    def plot_bao(self, fig=None, colors=None):
         """
         Plot data and theory BAO power spectrum wiggles.
 
@@ -320,9 +322,12 @@ class TracerPowerSpectrumMultipolesObservable(BaseCalculator):
         data, theory, std = self.data, self.theory, self.std
         nobao = self.theory_nobao
 
+        if colors is None:
+            colors = ['C%d'%i for i in range(len(self.ells))]
+
         for ill, ell in enumerate(self.ells):
-            lax[ill].errorbar(self.k[ill], self.k[ill] * (data[ill] - nobao[ill]), yerr=self.k[ill] * std[ill], color='C{:d}'.format(ill), linestyle='none', marker='o')
-            lax[ill].plot(self.k[ill], self.k[ill] * (theory[ill] - nobao[ill]), color='C{:d}'.format(ill))
+            lax[ill].errorbar(self.k[ill], self.k[ill] * (data[ill] - nobao[ill]), yerr=self.k[ill] * std[ill], color=colors[ill], linestyle='none', marker='o')
+            lax[ill].plot(self.k[ill], self.k[ill] * (theory[ill] - nobao[ill]), color=colors[ill])
             lax[ill].set_ylabel(r'$k \Delta P_{{{:d}}}(k)$ [$(\mathrm{{Mpc}}/h)^{{2}}$]'.format(ell))
         for ax in lax: ax.grid(True)
         lax[-1].set_xlabel(r'$k$ [$h/\mathrm{Mpc}$]')

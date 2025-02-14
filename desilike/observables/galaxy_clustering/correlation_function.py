@@ -198,7 +198,7 @@ class TracerCorrelationFunctionMultipolesObservable(BaseCalculator):
         return flatdata, list_y
 
     @plotting.plotter(interactive={'kw_theory': {'color': 'black', 'label': 'reference'}})
-    def plot(self, kw_theory=None, fig=None):
+    def plot(self, kw_theory=None, fig=None, colors=None):
         """
         Plot data and theory correlation function multipoles.
 
@@ -235,7 +235,10 @@ class TracerCorrelationFunctionMultipolesObservable(BaseCalculator):
             kw_theory = [kw_theory]
         if len(kw_theory) != len(self.ells):
             kw_theory = [{key: value for key, value in kw_theory[0].items() if (key != 'label') or (ill == 0)} for ill in range(len(self.ells))]
-        kw_theory = [{'color': 'C{:d}'.format(ill), **kw} for ill, kw in enumerate(kw_theory)]
+        if colors is None:
+            colors = ['C%d'%i for i in range(len(self.ells))]
+
+        kw_theory = [{'color': colors[ill], **kw} for ill, kw in enumerate(kw_theory)]
 
         if fig is None:
             height_ratios = [max(len(self.ells), 3)] + [1] * len(self.ells)
@@ -249,7 +252,7 @@ class TracerCorrelationFunctionMultipolesObservable(BaseCalculator):
 
         data, theory, std = self.data, self.theory, self.std
         for ill, ell in enumerate(self.ells):
-            lax[0].errorbar(self.s[ill], self.s[ill]**2 * data[ill], yerr=self.s[ill]**2 * std[ill], color='C{:d}'.format(ill), linestyle='none', marker='o', label=r'$\ell = {:d}$'.format(ell))
+            lax[0].errorbar(self.s[ill], self.s[ill]**2 * data[ill], yerr=self.s[ill]**2 * std[ill], color=colors[ill], linestyle='none', marker='o', label=r'$\ell = {:d}$'.format(ell))
             lax[0].plot(self.s[ill], self.s[ill]**2 * theory[ill], **kw_theory[ill])
         for ill, ell in enumerate(self.ells):
             lax[ill + 1].plot(self.s[ill], (data[ill] - theory[ill]) / std[ill], **kw_theory[ill])
@@ -263,7 +266,7 @@ class TracerCorrelationFunctionMultipolesObservable(BaseCalculator):
         return fig
 
     @plotting.plotter
-    def plot_bao(self, fig=None):
+    def plot_bao(self, fig=None, colors=None):
         """
         Plot data and theory BAO correlation function peak.
 
@@ -298,9 +301,12 @@ class TracerCorrelationFunctionMultipolesObservable(BaseCalculator):
         data, theory, std = self.data, self.theory, self.std
         nobao = self.theory_nobao
 
+        if colors is None:
+            colors = ['C%d'%i for i in range(len(self.ells))]
+
         for ill, ell in enumerate(self.ells):
-            lax[ill].errorbar(self.s[ill], self.s[ill]**2 * (data[ill] - nobao[ill]), yerr=self.s[ill]**2 * std[ill], color='C{:d}'.format(ill), linestyle='none', marker='o')
-            lax[ill].plot(self.s[ill], self.s[ill]**2 * (theory[ill] - nobao[ill]), color='C{:d}'.format(ill))
+            lax[ill].errorbar(self.s[ill], self.s[ill]**2 * (data[ill] - nobao[ill]), yerr=self.s[ill]**2 * std[ill], color=colors[ill], linestyle='none', marker='o')
+            lax[ill].plot(self.s[ill], self.s[ill]**2 * (theory[ill] - nobao[ill]), color=colors[ill])
             lax[ill].set_ylabel(r'$s^{{2}} \Delta \xi_{{{:d}}}(s)$ [$(\mathrm{{Mpc}}/h)^{{2}}$]'.format(ell))
         for ax in lax: ax.grid(True)
         lax[-1].set_xlabel(r'$s$ [$\mathrm{Mpc}/h$]')
